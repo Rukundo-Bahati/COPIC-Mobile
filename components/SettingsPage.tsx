@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Switch, Modal, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Switch, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-type SettingItem<T> = {
+type SettingItem<T = boolean | string> = {
   icon: string;
   label: string;
-  type: 'toggle' | 'select';
-  value: T;
-  onChange: Dispatch<SetStateAction<T>>;
-  options?: string[]; // Only needed for 'select' type
+  type?: 'toggle' | 'select';
+  value?: T; 
+  onChange?: (value: T) => void;
+  options?: string[]; 
+  action?: () => void; 
 };
-
 
 const SettingsPage = () => {
   const [notifications, setNotifications] = useState({
@@ -26,7 +26,7 @@ const SettingsPage = () => {
   const [isPrivate, setIsPrivate] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-const settingSections: { title: string; items: SettingItem<boolean | string>[] }[] = [
+  const settingSections: { title: string; items: SettingItem[] }[] = [
     {
       title: 'Account',
       items: [
@@ -52,20 +52,32 @@ const settingSections: { title: string; items: SettingItem<boolean | string>[] }
       ],
     },
   ];
-  
 
   const renderItem = (item: SettingItem) => {
+    if (item.action) {
+      // Handle items with an action (e.g., "Edit Profile")
+      return (
+        <TouchableOpacity style={styles.settingItem} onPress={item.action}>
+          <View style={styles.settingLeft}>
+            <Ionicons name={item.icon as any} size={24} color="#666" />
+            <Text style={styles.settingLabel}>{item.label}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#666" />
+        </TouchableOpacity>
+      );
+    }
+
     switch (item.type) {
       case 'toggle':
         return (
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Ionicons name={item.icon} size={24} color="#666" />
+              <Ionicons name={item.icon as any} size={24} color="#666" />
               <Text style={styles.settingLabel}>{item.label}</Text>
             </View>
             <Switch
               value={!!item.value} // Ensure boolean value
-              onValueChange={(value) => item.onChange && item.onChange(value)}
+              onValueChange={(value) => item.onChange && item.onChange(value as boolean)}
               trackColor={{ false: "#767577", true: "#81b0ff" }}
               thumbColor={item.value ? "#0095f6" : "#f4f3f4"}
             />
@@ -75,7 +87,7 @@ const settingSections: { title: string; items: SettingItem<boolean | string>[] }
         return (
           <TouchableOpacity style={styles.settingItem} onPress={() => alert(`Select an option for ${item.label}`)}>
             <View style={styles.settingLeft}>
-              <Ionicons name={item.icon} size={24} color="#666" />
+              <Ionicons name={item.icon as any} size={24} color="#666" />
               <Text style={styles.settingLabel}>{item.label}</Text>
             </View>
             <View style={styles.settingRight}>
@@ -85,15 +97,7 @@ const settingSections: { title: string; items: SettingItem<boolean | string>[] }
           </TouchableOpacity>
         );
       default:
-        return (
-          <TouchableOpacity style={styles.settingItem} onPress={item.action}>
-            <View style={styles.settingLeft}>
-              <Ionicons name={item.icon} size={24} color="#666" />
-              <Text style={styles.settingLabel}>{item.label}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
-          </TouchableOpacity>
-        );
+        return null;
     }
   };
 
